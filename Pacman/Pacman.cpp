@@ -378,7 +378,7 @@ void Pacman::UpdateGhost(MovingEnemy*, int elapsedTime)
 
 			if (_ghost[i]->_ghostPosition->X + _ghost[i]->_ghostRect->Width <= 0) //left to right
 			{
-					_ghost[i]->_ghostDirection = 1;
+				_ghost[i]->_ghostDirection = 1;
 			}
 			if (_ghost[i]->_ghostPosition->Y + _ghost[i]->_ghostRect->Height <= 0) // bottom to top
 			{
