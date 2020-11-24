@@ -395,7 +395,6 @@ void Pacman::UpdateGhost(MovingEnemy*, int elapsedTime)
 
 
 
-
 			//if (_ghost[i]->_ghostPosition->Y + _ghost[i]->_ghostRect->Height <= Graphics::GetViewportHeight()) // bottom to top
 			//{
 			//	_ghost[i]->_ghostDirection = 2;
