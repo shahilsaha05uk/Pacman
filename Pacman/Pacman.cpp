@@ -22,7 +22,6 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv), _cCherryFrameTime(100
 	_sound = new Sound();
 
 
-	//Sound Variables
 	//local variable
 	
 	for (int i = 0; i < CHERRYCOUNT; i++)
