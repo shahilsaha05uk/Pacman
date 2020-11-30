@@ -1,17 +1,29 @@
 #include "Pacman.h"
 #include <sstream>
 #include <time.h>
+#include <iostream>
+
 //local variable
+
+using namespace std;
+using namespace Audio;
+using namespace S2D;
 
 
 Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv), _cCherryFrameTime(100)
 {
+
+
 	//Structures
 	_pacman = new Player{1.0f, 350};
 	_start = new Start();
 	_menu = new Menu();
 	_map = new Map();
+	_sound = new Sound();
 
+
+	//Sound Variables
+	
 	//local variable
 	
 	for (int i = 0; i < CHERRYCOUNT; i++)
@@ -57,8 +69,23 @@ Pacman::Pacman(int argc, char* argv[]) : Game(argc, argv), _cCherryFrameTime(100
 	_pacman->dead = false;
 
 	//Initialise important Game aspects
+	Audio::Initialise();
 	Graphics::Initialise(argc, argv, this, 1024, 768, false, 25, 25, "Pacman", 60);
 	Input::Initialise();
+
+
+
+	if (!Audio::IsInitialised())
+	{
+		cout << "Audio is not initialised " << endl;
+	}
+	if (!_sound->_popSound->IsLoaded())
+	{
+		cout << "_pop member sound effect not loaded " << endl;
+	}
+
+
+
 
 	// Start the Game Loop - This calls Update and Draw in game loop
 	Graphics::StartGameLoop();
@@ -89,6 +116,9 @@ Pacman::~Pacman()
 		delete _ghost[i]->_ghostTexture;
 	}
 	delete _map;
+	delete _sound->_popSound;
+	delete _sound->_pauseSound;
+	delete _sound->_backgroundSound;
 }
 
 void Pacman::LoadContent()
@@ -129,6 +159,18 @@ void Pacman::LoadContent()
 	_map->_mapPosition = new Vector2(0,0);
 	_map->_mapRectangle = new Rect(0, 0, Graphics::GetViewportWidth(), Graphics::GetViewportHeight());
 
+	//Sounds
+	_sound->_popSound = new SoundEffect();
+	_sound->_pauseSound = new SoundEffect();
+	_sound->_backgroundSound = new SoundEffect();
+	_sound->_startSound = new SoundEffect();
+
+	_sound->_popSound->Load("Sounds/pop.wav");
+	_sound->_pauseSound->Load("Sounds/pause.wav");
+	_sound->_backgroundSound->Load("Sounds/originalBackgroundSound.wav");
+	_sound->_startSound->Load("Sounds/start.wav");
+
+
 	Texture2D* cherryTex = new Texture2D();
 	cherryTex->Load("Textures/SpriteCherries.png", false);
 
@@ -154,6 +196,9 @@ enum class S2D_API ButtonState
 	RELEASED = 0,
 	PRESSED
 };
+
+
+
 
 //Input methods
 void Pacman::Input(int elapsedTime, Input::KeyboardState* state, Input::MouseState* m_state)
@@ -221,6 +266,8 @@ void Pacman::Input(int elapsedTime, Input::KeyboardState* state, Input::MouseSta
 	}
 }
 
+
+
 //Check methods
 
 void Pacman::CheckStart(Input::KeyboardState* state, Input::Keys SPACE)
@@ -228,13 +275,19 @@ void Pacman::CheckStart(Input::KeyboardState* state, Input::Keys SPACE)
 	//Start Key Bindings
 	if (state->IsKeyDown(Input::Keys::SPACE) && !_start->_started)
 	{
+		
 		_start->_SpaceKeyDown = true;
 		_start->_started = !_start->_started;
+		Play(_sound->_startSound);
 	}
 	if (state->IsKeyUp(Input::Keys::SPACE))
 	{
+	
 		_start->_SpaceKeyDown = false;
+		
 	}
+	
+
 }
 
 void Pacman::CheckPaused(Input::KeyboardState* state, Input::Keys P)
@@ -244,6 +297,7 @@ void Pacman::CheckPaused(Input::KeyboardState* state, Input::Keys P)
 	{
 		_pKeyDown = true;
 		_paused = !_paused;
+		Play(_sound->_pauseSound);
 	}
 	if (state->IsKeyUp(Input::Keys::P))
 		_pKeyDown = false;
@@ -380,10 +434,7 @@ void Pacman::UpdateGhost(MovingEnemy*, int elapsedTime)
 			{
 				_ghost[i]->_ghostDirection = 1;
 			}
-			if (_ghost[i]->_ghostPosition->Y + _ghost[i]->_ghostRect->Height <= 0) // bottom to top
-			{
-				_ghost[i]->_ghostDirection = 2;
-			}
+
 			if (_ghost[i]->_ghostPosition->X + _ghost[i]->_ghostRect->Width >= Graphics::GetViewportWidth()) //right to bottom
 			{
 				_ghost[i]->_ghostDirection = 3;
@@ -392,7 +443,10 @@ void Pacman::UpdateGhost(MovingEnemy*, int elapsedTime)
 			{
 				_ghost[i]->_ghostDirection = 0;
 			}
-
+			if (_ghost[i]->_ghostPosition->Y + _ghost[i]->_ghostRect->Height <= 0) // bottom to top
+			{
+				_ghost[i]->_ghostDirection = 2;
+			}
 
 
 
@@ -456,49 +510,92 @@ void Pacman::UpdateGhost(MovingEnemy*, int elapsedTime)
 
 
 
+
+
+
+
 void Pacman::Update(int elapsedTime)
 {
+
 	// Gets the current state of the keyboard
 	Input::KeyboardState* keyboardState = Input::Keyboard::GetState();
 	Input::MouseState* mouseState = Input::Mouse::GetState();
+
+
+	cout << boolalpha;
+
 	if (!_start->_started)
 	{
-		//check for start
 
+		//check for start
 		CheckStart(keyboardState, Input::Keys::SPACE);
 	}
+
+
+
+
+
 	else
 	{
 		CheckPaused(keyboardState, Input::Keys::P);
-		if (!_paused)
-		{
-			Input(elapsedTime, keyboardState, mouseState);
-			UpdatePacman(elapsedTime);
 
-			for (int i = 0; i < GHOSTCOUNT; i++)
+			if (!_paused)
 			{
-				UpdateGhost(_ghost[0], elapsedTime);
-			}
-			
+				Input(elapsedTime, keyboardState, mouseState);
+				UpdatePacman(elapsedTime);
 
+				for (int i = 0; i < GHOSTCOUNT; i++)
+				{
+					UpdateGhost(_ghost[0], elapsedTime);
 
-			CheckGhostCollisions();
-			CheckViewportCollision();
-			for (int i = 0; i < CHERRYCOUNT; i++)
-			{
-
-				UpdateCherry(_cherry[i], elapsedTime);
-
-				if (CollisionCheck(_pacman->_pacmanPosition->X, _pacman->_pacmanPosition->Y, _pacman->_pacmanSourceRect->Width, _pacman->_pacmanSourceRect->Height, _cherry[i]->_cherry_position->X, _cherry[i]->_cherry_position->Y, _cherry[i]->_cherryRect->Width, _cherry[i]->_cherryRect->Height))
+				}
+				CheckGhostCollisions();
+				CheckViewportCollision();
+				for (int i = 0; i < CHERRYCOUNT; i++)
 				{
 
-					_cherry[i]->_cherry_position->X = rand() % Graphics::GetViewportWidth();
-					_cherry[i]->_cherry_position->Y = rand() % Graphics::GetViewportHeight();
+					UpdateCherry(_cherry[i], elapsedTime);
+
+					if (CollisionCheck(_pacman->_pacmanPosition->X, _pacman->_pacmanPosition->Y, _pacman->_pacmanSourceRect->Width, _pacman->_pacmanSourceRect->Height, _cherry[i]->_cherry_position->X, _cherry[i]->_cherry_position->Y, _cherry[i]->_cherryRect->Width, _cherry[i]->_cherryRect->Height))
+					{
+
+						_cherry[i]->_cherry_position->X = rand() % Graphics::GetViewportWidth();
+						_cherry[i]->_cherry_position->Y = rand() % Graphics::GetViewportHeight();
+						Audio::Play(_sound->_popSound);
+
+					}
+
 				}
 			}
-		}
+
 	}
+	int soundState;
+	if (!_paused)
+	{
+		_sound->_isLooping = true;
+		SetLooping(_sound->_isLooping);
+	}
+
 }
+void Pacman::SetLooping(bool loop)
+{
+	while (loop== true)
+	{
+		SoundEffect GetState();
+
+		if () // if the sound is stopped then play the sound
+		{
+			Play(_sound->_backgroundSound);
+			
+		}
+		
+	}
+
+}
+
+
+
+
 
 void Pacman::Draw(int elapsedTime)
 {

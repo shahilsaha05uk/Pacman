@@ -12,7 +12,7 @@
 #define GHOSTCOUNT 1
 // Just need to include main header file
 #include "S2D/S2D.h"
-
+#include <iostream>
 // Reduces the amount of typing by including all classes in S2D namespace
 using namespace S2D;
 
@@ -97,6 +97,18 @@ struct Menu
 	Vector2* _menuStringPosition;
 };
 
+struct Sound
+{
+	SoundEffect* _popSound;
+	SoundEffect* _pauseSound;
+	SoundEffect* _backgroundSound;
+	SoundEffect* _startSound;
+
+
+	bool _isLooping;
+};
+
+
 
 
 // Declares the Pacman class which inherits from the Game class.
@@ -105,6 +117,13 @@ struct Menu
 class Pacman : public Game
 {
 private:
+	//Sounds
+	
+
+
+	Sound* _sound;
+	
+
 
 	//Map
 	Map* _map;
@@ -147,7 +166,6 @@ private:
 	//Input methods
 	void Input(int elapsedTime, Input::KeyboardState* state, Input::MouseState* m_state);
 
-
 	//Check methods
 	void CheckPaused(Input::KeyboardState* state, Input::Keys pauseKey);
 	void CheckStart(Input::KeyboardState* state, Input::Keys startKey);
@@ -160,6 +178,8 @@ private:
 	void UpdateGhost(MovingEnemy*, int elapsedTime);
 	//******************************************************************************************
 
+	
+	
 
 
 
@@ -167,6 +187,8 @@ private:
 public:
 	/// <summary> Constructs the Pacman class. </summary>
 	Pacman(int argc, char* argv[]);
+
+	
 
 	/// <summary> Destroys any data associated with Pacman class. </summary>
 	virtual ~Pacman();
@@ -179,7 +201,6 @@ public:
 
 	/// <summary> Called every frame - draw game here. </summary>
 	void virtual Draw(int elapsedTime);
-
 
 
 
@@ -219,7 +240,12 @@ public:
 	}
 
 
+	//Sounds
+	void Pacman::SetLooping(bool loop);
 
-	//Game runtime
+		SoundEffectState Stopped = SoundEffectState::STOPPED;
+		SoundEffectState Playing = SoundEffectState::PLAYING;
+		
 
 };
+
