@@ -10,12 +10,16 @@
 
 #define CHERRYCOUNT 1
 #define GHOSTCOUNT 1
+#define BOMBCOUNT 1
+#define SUNCOUNT 1
+
+
 // Just need to include main header file
 #include "S2D/S2D.h"
 #include <iostream>
+#include <fstream>
 // Reduces the amount of typing by including all classes in S2D namespace
 using namespace S2D;
-
 
 //Structures
 
@@ -32,7 +36,10 @@ struct Player
 	Rect* _pacmanSourceRect;
 	Texture2D* _pacmanTexture;
 	int _pacmanDirection;
-
+	Texture2D* _deadTexture;
+	Vector2* _DeadpacmanPosition;
+	Rect* _DeadpacmanSourceRect;
+	int _deadFrameCount;
 	float speedMultiplier;
 };
 
@@ -50,10 +57,24 @@ struct Cherry
 	int CurrentFrameTime;
 	int _randCherryFrameTime;
 	int frameCount;
+	
 
 	Texture2D* cherryTex;
 };
+struct Sun
+{
+	Texture2D* _sunTexture;
+	Vector2* _sunPosition;
+	Rect* _sunRect;
 
+	int _sunTotalFrames;
+	int _sunCurrentFrame;
+	int _cSunCurrentFrameTime;
+	int _sunCurrentFrameTime;
+	int _sunFrameCount;
+
+
+};
 
 struct MovingEnemy
 {
@@ -69,6 +90,10 @@ struct MovingEnemy
 	Vector2* _ghost2Position;
 	int _ghost2Direction;
 
+	//int randomtime = rand() % 5250;
+	int _cghostDirecttionTime = 3000;
+	int _ghostDirectionTime;
+	int _ghostRandomDirection;
 };
 
 struct Map
@@ -77,9 +102,6 @@ struct Map
 	Rect* _mapRectangle;
 	Texture2D* _mapTexture;
 };
-
-
-
 
 struct Start
 {
@@ -90,11 +112,45 @@ struct Start
 	bool _SpaceKeyDown;
 };
 
+struct GameOver
+{
+	Texture2D* _gameOverBackground;
+	Rect* _gameOverRectangle;
+	Vector2* _gameOverPosition;
+	bool _gameOver;
+	bool _RkeyDown;
+
+
+};
+
 struct Menu 
 {
 	Texture2D* _menuBackground;
 	Rect* _menuRectangle;
 	Vector2* _menuStringPosition;
+};
+
+struct Bomb
+{
+	Texture2D* _bombTexture;
+	Vector2* _bombPosition;
+	Rect* _bombRect;
+
+	//frames
+	int _bombTotalFrames;
+	int _bombCurrentFrameTime;
+	int _cBombFrameTime;
+	int _bombFrameCount;
+
+	int _bombBlastTotalFrames;
+	int _bombBlastCurrentFrameTime;
+	int _cBombBlastFrameTime;
+	int _bombBlastFrameCount;
+	bool _CanBlast=false;
+
+	Rect* _bombBlastRect;
+	Vector2* _bombBlastPosition;
+	Texture2D* _blastTexture;
 };
 
 struct Sound
@@ -103,12 +159,31 @@ struct Sound
 	SoundEffect* _pauseSound;
 	SoundEffect* _backgroundSound;
 	SoundEffect* _startSound;
+	SoundEffect* _bombBlast;
+	SoundEffect* _sunSound;
 
-
-	bool _isLooping;
 };
 
+struct Stats
+{
+	int _cherryscore;
+	int _sunscore;
+	int _finalscore;
 
+	int _cherryCollisionCount=0;
+	int _sunCollisionCount=0;
+	Vector2* _collisionStatsPosition;
+	const int sunpoint = 10;
+	const int cherrypoint = 5;
+	
+};
+
+struct Tiles
+{
+	Texture2D* _tilesTecture;
+	Vector2* _tilesPosition;
+	Rect* _tilesRect;
+};
 
 
 // Declares the Pacman class which inherits from the Game class.
@@ -117,50 +192,47 @@ struct Sound
 class Pacman : public Game
 {
 private:
+
+	//Characters
+	Player *_pacman;
+	MovingEnemy* _ghost[GHOSTCOUNT];
+
+	//Collectibles
+	Sun* _sun[SUNCOUNT];
+	Cherry** _cherry;
+
+	//Explosives
+	Bomb* _bomb[BOMBCOUNT];
+
 	//Sounds
-	
-
-
 	Sound* _sound;
-	
 
-
-	//Map
-	Map* _map;
-
-	//*************PACMAN**************************
-
-	Player* _pacman;
-
-	//*********************START************************************************************
-
+	//Stats
+	Stats* _stats;
+	//UI
 	Start* _start;
-
-	//*****************************************MENU*************************************************
-
+	GameOver* _gameOver;
 	Menu* _menu;
 
-	//*********************PAUSE***************************************************************
+	//Tiles
+	Tiles* _tiles;
+
+
+	//Extra Variables
+	Texture2D* _restartTexture;
+	Vector2* _restartPosition;
+	Rect* _restartRect;
 
 	bool _paused;
 	bool _pKeyDown;
-
-	//**************************************STRING********************************************
+	bool _returnKeyDown;
 
 	Vector2* _stringPosition;
-	//**********************CHERRIES***********************************************************
 
-	Cherry* _cherry[CHERRYCOUNT];
 	const int _cCherryFrameTime;
-
-	//cherry randomizer
 	int cRandom_timer = 500;
 	int Random_timer;
 
-	//**********************ENEMY***********************************************************
-
-	MovingEnemy* _ghost[GHOSTCOUNT];
-	
 
 	//**********************METHODS***********************************************************
 	//Input methods
@@ -170,25 +242,33 @@ private:
 	void CheckPaused(Input::KeyboardState* state, Input::Keys pauseKey);
 	void CheckStart(Input::KeyboardState* state, Input::Keys startKey);
 	void CheckViewportCollision();
-	void CheckGhostCollisions();
+	bool CheckGhostCollisions(int pac_x1, int pac_y1, int pac_w1, int pac_h1, int ghost_x2, int ghost_y2, int ghost_w2, int ghost_h2);
 
-	//Update methods
+	//Update methods;;
 	void UpdatePacman(int elapsedTime);
 	void UpdateCherry(Cherry*, int elapsedTime);
 	void UpdateGhost(MovingEnemy*, int elapsedTime);
+	void UpdateSun(Sun*, int elapsedTime);
+	void UpdateBomb(Bomb*, int elapsedTime);
+	void DeadAnimation(int elapsedTime);
+
+	void gameover();
 	//******************************************************************************************
 
-	
-	
+	void ChaseCheck(int elapsedTime);
+	void SetLooping(bool loop);
+	bool CollisionCherryCheck(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2);
+	bool CollisionSunCheck(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2);
+	bool CheckBombCollisions(int pac_x1, int pac_y1, int pac_w1, int pac_h1, int bomb_x2, int bomb_y2, int bomb_w2, int bomb_h2);
+	void CheckTileCollision(int elapsedTime);
+	void RandomGhostDirection(MovingEnemy*, int elapsedTime);
 
-
-
-
+	void ScoreTable();
 public:
-	/// <summary> Constructs the Pacman class. </summary>
-	Pacman(int argc, char* argv[]);
 
-	
+	/// <summary> Constructs the Pacman class. </summary>
+	Pacman(int argc, char* argv[], int _cherryCount);
+
 
 	/// <summary> Destroys any data associated with Pacman class. </summary>
 	virtual ~Pacman();
@@ -204,48 +284,12 @@ public:
 
 
 
-	bool CollisionCheck(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2)
-	{
-		int leftPacman = x1;
-		int topPacman = y1;
-		int rightPacman = x1 + w1;
-		int bottomPacman = y1 + h1;
 
 
 
-		int leftCherry = x2;
-		int topCherry = y2;
-		int rightCherry = x2 + w2;
-		int bottomCherry = y2 + h2;
-
-
-		if (bottomPacman < topCherry)
-		{
-			return false;
-		}
-		if (topPacman > bottomCherry)
-		{
-			return false;
-		}
-		if (rightPacman < leftCherry)
-		{
-			return false;
-		}
-		if (leftPacman > rightCherry)
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-
-	//Sounds
-	void Pacman::SetLooping(bool loop);
-
-		SoundEffectState Stopped = SoundEffectState::STOPPED;
-		SoundEffectState Playing = SoundEffectState::PLAYING;
-		
 
 };
+
+
+
 
