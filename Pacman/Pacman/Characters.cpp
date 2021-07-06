@@ -4,18 +4,15 @@ Characters::Characters()
 {
 
 }
-
 Characters::~Characters()
 {
 
 }
-
 void Characters::Update(float deltaTime)
 {
 
 }
-
 Rect Characters::GetPosition()
 {
-	return Rect(_position.X, _position.Y, spriteWidth, spriteHeight);
+	return Rect(objPosition->X, objPosition->Y, _position.Width, _position.Height);
 }

@@ -84,24 +84,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BombObj.cpp" />
-    <ClCompile Include="Characters.cpp" />
-    <ClCompile Include="CherryObj.cpp" />
-    <ClCompile Include="Collision.cpp" />
-    <ClCompile Include="GameManager.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="ObjectLoader.cpp" />
     <ClCompile Include="Pacman.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BombObj.h" />
-    <ClInclude Include="Characters.h" />
-    <ClInclude Include="CherryObj.h" />
-    <ClInclude Include="Collision.h" />
-    <ClInclude Include="Constants.h" />
-    <ClInclude Include="GameManager.h" />
-    <ClInclude Include="ObjectLoader.h" />
-    <ClInclude Include="Structures.h" />
     <ClInclude Include="Pacman.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

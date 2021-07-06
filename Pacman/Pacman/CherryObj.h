@@ -2,10 +2,11 @@
 
 #include "Structures.h"
 #include "Characters.h"
+#include "Constants.h"
 
 using namespace S2D;
 
-class CherryObj : public Characters
+class CherryObj  : public Characters
 {
 private:
 
@@ -13,16 +14,16 @@ private:
 	int cRandom_timer = 500;
 	int Random_timer;
 
-
+	
 
 public:
 	CherryObj();
 	~CherryObj();
 
 	void Load();
-	void Update(float elapsedTime);
+	void Update(float deltaTime);
 	void Draw();
-	void Animation();
+	void Animation(float deltaTime);
 
 };
 

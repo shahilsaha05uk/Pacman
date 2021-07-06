@@ -1,8 +1,8 @@
 #pragma once
 #include "Characters.h"
 #include "Structures.h"
+#include "Constants.h"
 
-#define BOMBCOUNT 1
 
 class BombObj : public Characters
 {
@@ -21,9 +21,9 @@ public:
 	~BombObj();
 
 	void Load();
-	void Update(float elapsedTime);
+	void Update(float deltaTime);
 	void Draw();
-	void Animation();
+	void Animation(float deltaTime);
 
 };
 
