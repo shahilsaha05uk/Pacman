@@ -6,6 +6,8 @@
 #include <iostream>
 
 
+
+
 using namespace std;
 using namespace S2D;
 
@@ -24,6 +26,9 @@ protected:
 	Vector2* objPosition;
 	Texture2D* objTexture;
 	Rect* objRect;
+	Rect* objSourceRect;
+
+
 	//Vector2* offCherryPosition;
 
 	int objTotalFrames;
@@ -39,6 +44,7 @@ public:
 	~Characters();
 
 	void Update(float deltaTime);
+
 
 	Rect GetPosition();
 };

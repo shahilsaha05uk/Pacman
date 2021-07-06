@@ -14,39 +14,43 @@ void CherryObj::Load()
 	objLoad = new ObjectLoader(objTexture, "Textures/SpriteCherries.png");
 	objRect = new Rect(0.0f, 0.0f, 32, 32);
 	objPosition = new Vector2((rand() % Graphics::GetViewportWidth() - 32), (rand() % Graphics::GetViewportHeight()));
+
+	_position = *objRect;
 }
-void CherryObj::Update(float elapsedTime)
+void CherryObj::Update(float deltaTime)
 {
-	objCurrentFrameTime += elapsedTime;
-	if (objCurrentFrameTime > _cCherryFrameTime)
-	{
-		objFrameCount++;
-		if (objFrameCount >= 2) {
-			objFrameCount = 0;
-		}
-		objCurrentFrameTime = 0;
+	//cout << "Position X: " << objPosition->X << endl;
+	//cout << "Position Y: " << objPosition->Y << endl;
+	//cout << "Width: " << _position.Width << endl;
+	//cout << "Height: " << _position.Height << endl;
 
-		objRect->X = objRect->Width * objFrameCount;
-		objRect->Y = objRect->Height * objFrameCount;
-
-	}
+	Animation(deltaTime);
 }
 
 void CherryObj::Draw()
 {
-
-
 	SpriteBatch::Draw(objTexture, objPosition, objRect);
-
-	//if (CollisionCherryCheck(_pacman->_pacmanPosition->X, _pacman->_pacmanPosition->Y, _pacman->_pacmanSourceRect->Width, _pacman->_pacmanSourceRect->Height, _cherry->_cherry_position->X, _cherry->_cherry_position->Y, _cherry->_cherryRect->Width, _cherry->_cherryRect->Height))
-	//{
-	//	SpriteBatch::Draw(_cherry->_cherries, _cherry->_cherry_position, _cherry->_cherryRect);
-	//}
-
 }
-void CherryObj::Animation()
+void CherryObj::Animation(float deltaTime)
 {
-	objCurrentFrameTime = 0;
-	objFrameCount = rand() % 2;
-	objRandFrameTime = rand() % 500 + 50;
+	for (int i = 0; i < CHERRYCOUNT; i++)
+	{
+		objCurrentFrameTime = 0;
+		objFrameCount = rand() % 2;
+		objRandFrameTime = rand() % 500 + 50;
+
+		objCurrentFrameTime += deltaTime;
+		if (objCurrentFrameTime > _cCherryFrameTime)
+		{
+			objFrameCount++;
+			if (objFrameCount >= 2) {
+				objFrameCount = 0;
+			}
+			objCurrentFrameTime = 0;
+
+			objRect->X = objRect->Width * objFrameCount;
+			objRect->Y = objRect->Height * objFrameCount;
+
+		}
+	}
 }

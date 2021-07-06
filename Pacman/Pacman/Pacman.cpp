@@ -3,7 +3,7 @@
 #include <time.h>
 #include <iostream>
 #include<fstream>
-#include "CherryObj.h"
+
 //local variable
 
 using namespace std;
@@ -13,10 +13,6 @@ using namespace S2D;
 
 Pacman::Pacman(int argc, char* argv[], int _cherryCount) : Game(argc, argv), _cCherryFrameTime(100)
 {
-
-	_cherry = new CherryObj();
-
-
 
 	//Structures
 	_pacman = new Player{0.5f, 150};
@@ -33,6 +29,16 @@ Pacman::Pacman(int argc, char* argv[], int _cherryCount) : Game(argc, argv), _cC
 	//bool INPUT Flag
 	bool inputFlag;
 
+	//Cherry variable
+	_cherry = new Cherry * [_cherryCount];
+	/*_cherry = new Cherry * [_cherryCount];*/  // here I declared a pointer variable named _cherry with a size _cherryCount
+	for (int i = 0; i < _cherryCount; i++)
+	{
+		*_cherry = new Cherry();
+		_cherry[i]->CurrentFrameTime = 0;
+		_cherry[i]->frameCount = rand()% 2;
+		_cherry[i]->_randCherryFrameTime = rand() % 500 + 50;
+	}
 
 	//Stats Variable
 	_stats->_cherryscore = 0;
@@ -136,6 +142,14 @@ Pacman::~Pacman()
 {
 	delete _pacman->_pacmanTexture;
 	delete _pacman->_pacmanSourceRect;
+	for (int i = 0; i < CHERRYCOUNT; i++)
+	{
+			delete _cherry[i]->_cherries;
+			delete[] _cherry;
+			delete _cherry[i]->_cherries;
+			delete _cherry[i]->_cherryRect;
+			delete _cherry[i];
+	}
 	for (int i = 0; i < BOMBCOUNT; i++)
 	{
 		delete _bomb[i];
@@ -210,7 +224,7 @@ void Pacman::LoadContent()
 	_pacman->_DeadpacmanSourceRect = new Rect(0.0f, 0.0f, 32, 32);
 
 
-	_cherry->Load();
+
 	//Gave Over
 	_gameOver->_gameOverBackground = new Texture2D();
 	_gameOver->_gameOverBackground->Load("Textures/Gameover.png", false);
@@ -260,6 +274,20 @@ void Pacman::LoadContent()
 		_bomb[i]->_bombBlastPosition = new Vector2((rand() % Graphics::GetViewportWidth()-32), (rand() % Graphics::GetViewportHeight()-32));
 	}
 
+	Texture2D* cherryTex = new Texture2D();
+	cherryTex->Load("Textures/SpriteCherries.png", false);
+
+	for (int i = 0; i < CHERRYCOUNT; i++)
+	{
+		//Load Cherries
+		_cherry[i]->_cherries = new Texture2D();
+		_cherry[i]->_cherries = cherryTex;
+		_cherry[i]->_cherries->Load("Textures/SpriteCherries.png", true);
+		_cherry[i]->_cherryRect = new Rect(0.0f, 0.0f, 32, 32);
+		_cherry[i]->_cherry_position = new Vector2(200.0f, 200.0f);
+		_cherry[i]->_cherry_position = new Vector2((rand()% Graphics::GetViewportWidth()-32), (rand()%Graphics::GetViewportHeight()));
+	
+	}
 
 	//Sun
 	Texture2D* sunTex = new Texture2D();
@@ -357,27 +385,30 @@ void Pacman::Input(int elapsedTime, Input::KeyboardState* state, Input::MouseSta
 			_pacman->speedMultiplier = 1.0f;
 		}
 
-		//for (int i = 0; i < CHERRYCOUNT; i++)
-		//{
-		//	Random_timer += elapsedTime;
-		//	if (Random_timer > cRandom_timer)
-		//	{
-		//		if (state->IsKeyDown(Input::Keys::R))
-		//		{
-		//			_cherry[i]->_cherry_position->X = rand() % Graphics::GetViewportWidth();
-		//			_cherry[i]->_cherry_position->Y = rand() % Graphics::GetViewportHeight();
-		//			Random_timer = 0;
-		//		}
-		//	}
-		//}
-		//if (m_state->LeftButton == Input::ButtonState::PRESSED)
-		//{
-		//	for (int i = 0; i < CHERRYCOUNT; i++)
-		//	{
-		//		_cherry[i]->_cherry_position->X = m_state->X;
-		//		_cherry[i]->_cherry_position->Y = m_state->Y;
-		//	}
-		//}
+		for (int i = 0; i < CHERRYCOUNT; i++)
+		{
+			Random_timer += elapsedTime;
+
+			if (Random_timer > cRandom_timer)
+			{
+				if (state->IsKeyDown(Input::Keys::R))
+				{
+					_cherry[i]->_cherry_position->X = rand() % Graphics::GetViewportWidth();
+					_cherry[i]->_cherry_position->Y = rand() % Graphics::GetViewportHeight();
+					Random_timer = 0;
+				}
+			}
+
+		}
+
+		if (m_state->LeftButton == Input::ButtonState::PRESSED)
+		{
+			for (int i = 0; i < CHERRYCOUNT; i++)
+			{
+				_cherry[i]->_cherry_position->X = m_state->X;
+				_cherry[i]->_cherry_position->Y = m_state->Y;
+			}
+		}
 	}
 }
 
@@ -416,25 +447,25 @@ void Pacman::DeadAnimation(int elapsedTime)
 	}
 }
 
-//void Pacman::UpdateCherry(Cherry*, int elapsedTime)
-//{
-//	for (int i = 0; i < CHERRYCOUNT; i++)
-//	{
-//		_cherry[i]->CurrentFrameTime += elapsedTime;
-//		if (_cherry[i]->CurrentFrameTime > _cCherryFrameTime)
-//		{
-//			_cherry[i]->frameCount++;
-//			if (_cherry[i]->frameCount >= 2) {
-//				_cherry[i]->frameCount = 0;
-//			}
-//			_cherry[i]->CurrentFrameTime = 0;
-//
-//			_cherry[i]->_cherryRect->X = _cherry[i]->_cherryRect->Width * _cherry[i]->frameCount;
-//			_cherry[i]->_cherryRect->Y = _cherry[i]->_cherryRect->Height * _cherry[i]->frameCount;
-//
-//		}
-//	}
-//}
+void Pacman::UpdateCherry(Cherry*, int elapsedTime)
+{
+	for (int i = 0; i < CHERRYCOUNT; i++)
+	{
+		_cherry[i]->CurrentFrameTime += elapsedTime;
+		if (_cherry[i]->CurrentFrameTime > _cCherryFrameTime)
+		{
+			_cherry[i]->frameCount++;
+			if (_cherry[i]->frameCount >= 2) {
+				_cherry[i]->frameCount = 0;
+			}
+			_cherry[i]->CurrentFrameTime = 0;
+
+			_cherry[i]->_cherryRect->X = _cherry[i]->_cherryRect->Width * _cherry[i]->frameCount;
+			_cherry[i]->_cherryRect->Y = _cherry[i]->_cherryRect->Height * _cherry[i]->frameCount;
+
+		}
+	}
+}
 
 void Pacman::UpdateSun(Sun*, int elapsedTime)
 {
@@ -597,7 +628,6 @@ void Pacman::Update(int elapsedTime)
 	Input::MouseState* mouseState = Input::Mouse::GetState();
 	cout << boolalpha;
 
-	_cherry->Update(elapsedTime);
 
 	if (!_start->_started)
 	{
@@ -609,8 +639,11 @@ void Pacman::Update(int elapsedTime)
 		CheckPaused(keyboardState, Input::Keys::P);
 		if (!_paused)
 		{
-			
+
 			//Collisions
+
+		
+
 			CheckViewportCollision();
 			CheckTileCollision(elapsedTime);
 			//Input
@@ -632,22 +665,23 @@ void Pacman::Update(int elapsedTime)
 			}
 
 			//Cherry
-			//for (int i = 0; i < CHERRYCOUNT; i++)
-			//{
-			//	UpdateCherry(_cherry[i], elapsedTime);
-			//	if (CollisionCherryCheck(_pacman->_pacmanPosition->X, _pacman->_pacmanPosition->Y, _pacman->_pacmanSourceRect->Width, _pacman->_pacmanSourceRect->Height, _cherry[i]->_cherry_position->X, _cherry[i]->_cherry_position->Y, _cherry[i]->_cherryRect->Width, _cherry[i]->_cherryRect->Height))
-			//	{
-			//		_cherry[i]->_cherry_position->X = rand() % Graphics::GetViewportWidth();
-			//		_cherry[i]->_cherry_position->Y = rand() % Graphics::GetViewportHeight();
-			//		Audio::Play(_sound->_popSound);
-			//		_stats->_cherryCollisionCount++;
-			//		_stats->_cherryscore += _stats->cherrypoint;
-			//		_stats->_finalscore += _stats->_cherryscore;
-			//		_stats->_cherryscore = 0;
-			//	}
-			//}
-			
+			for (int i = 0; i < CHERRYCOUNT; i++)
+			{
+				UpdateCherry(_cherry[i], elapsedTime);
+				if (CollisionCherryCheck(_pacman->_pacmanPosition->X, _pacman->_pacmanPosition->Y, _pacman->_pacmanSourceRect->Width, _pacman->_pacmanSourceRect->Height, _cherry[i]->_cherry_position->X, _cherry[i]->_cherry_position->Y, _cherry[i]->_cherryRect->Width, _cherry[i]->_cherryRect->Height))
+				{
+					_cherry[i]->_cherry_position->X = rand() % Graphics::GetViewportWidth();
+					_cherry[i]->_cherry_position->Y = rand() % Graphics::GetViewportHeight();
+					Audio::Play(_sound->_popSound);
 
+					_stats->_cherryCollisionCount++;
+					_stats->_cherryscore += _stats->cherrypoint;
+					_stats->_finalscore += _stats->_cherryscore;
+					_stats->_cherryscore = 0;
+
+
+				}
+			}
 			//Sun
 			for (int i = 0; i < SUNCOUNT; i++)
 			{
@@ -752,7 +786,18 @@ void Pacman::Draw(int elapsedTime)
 		SpriteBatch::Draw(_pacman->_deadTexture, _pacman->_pacmanPosition, _pacman->_pacmanSourceRect);
 	}
 
-	_cherry->Draw();
+	//Draw Cherry
+	for (int i = 0; i < CHERRYCOUNT; i++)
+	{
+		//Draw red cherry
+		SpriteBatch::Draw(_cherry[i]->_cherries, _cherry[i]->_cherry_position, _cherry[i]->_cherryRect);
+
+		if (CollisionCherryCheck(_pacman->_pacmanPosition->X, _pacman->_pacmanPosition->Y, _pacman->_pacmanSourceRect->Width, _pacman->_pacmanSourceRect->Height, _cherry[i]->_cherry_position->X, _cherry[i]->_cherry_position->Y, _cherry[i]->_cherryRect->Width, _cherry[i]->_cherryRect->Height))
+		{
+			SpriteBatch::Draw(_cherry[i]->_cherries, _cherry[i]->_cherry_position, _cherry[i]->_cherryRect);
+		}
+	}
+
 	//Draw Sun
 	for (int i = 0; i < SUNCOUNT; i++)
 	{
@@ -793,14 +838,14 @@ void Pacman::Draw(int elapsedTime)
 		SpriteBatch::Draw(_ghost[i]->_ghostTexture, _ghost[i]->_ghost2Position, _ghost[i]->_ghost2Rect);
 
 		//Draw bomb
-		//for (int i = 0; i < BOMBCOUNT; i++)
-		//{
-		//	SpriteBatch::Draw(_bomb[i]->_bombTexture, _bomb[i]->_bombPosition, _bomb[i]->_bombRect);
-		//	if (CheckBombCollisions(_pacman->_pacmanPosition->X, _pacman->_pacmanPosition->Y, _pacman->_pacmanSourceRect->Width, _pacman->_pacmanSourceRect->Height, _bomb[i]->_bombPosition->X, _bomb[i]->_bombPosition->Y, _bomb[i]->_bombRect->Width, _bomb[i]->_bombRect->Height))
-		//	{
-		//		SpriteBatch::Draw(_bomb[i]->_bombTexture, _bomb[i]->_bombPosition, _bomb[i]->_bombRect);
-		//	}
-		//}
+		for (int i = 0; i < BOMBCOUNT; i++)
+		{
+			SpriteBatch::Draw(_bomb[i]->_bombTexture, _bomb[i]->_bombPosition, _bomb[i]->_bombRect);
+			if (CheckBombCollisions(_pacman->_pacmanPosition->X, _pacman->_pacmanPosition->Y, _pacman->_pacmanSourceRect->Width, _pacman->_pacmanSourceRect->Height, _bomb[i]->_bombPosition->X, _bomb[i]->_bombPosition->Y, _bomb[i]->_bombRect->Width, _bomb[i]->_bombRect->Height))
+			{
+				SpriteBatch::Draw(_bomb[i]->_bombTexture, _bomb[i]->_bombPosition, _bomb[i]->_bombRect);
+			}
+		}
 		if (_gameOver->_gameOver == true && _bomb[i]->_bombBlastFrameCount > _bomb[i]->_bombBlastTotalFrames)
 		{
 			SpriteBatch::Draw(_gameOver->_gameOverBackground, _gameOver->_gameOverPosition, _gameOver->_gameOverRectangle);
@@ -1020,38 +1065,40 @@ bool Pacman::CheckBombCollisions(int pac_x1, int pac_y1, int pac_w1, int pac_h1,
 	return true;
 }
 
-//bool Pacman::CollisionCherryCheck(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2)
-//{
-//	int leftPacman = x1;
-//	int topPacman = y1;
-//	int rightPacman = x1 + w1;
-//	int bottomPacman = y1 + h1;
-//
-//	int leftCherry = x2;
-//	int topCherry = y2;
-//	int rightCherry = x2 + w2;
-//	int bottomCherry = y2 + h2;
-//
-//
-//	if (bottomPacman < topCherry)
-//	{
-//		return false;
-//	}
-//	if (topPacman > bottomCherry)
-//	{
-//		return false;
-//	}
-//	if (rightPacman < leftCherry)
-//	{
-//		return false;
-//	}
-//	if (leftPacman > rightCherry)
-//	{
-//		return false;
-//	}
-//
-//	return true;
-//}
+bool Pacman::CollisionCherryCheck(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2)
+{
+	int leftPacman = x1;
+	int topPacman = y1;
+	int rightPacman = x1 + w1;
+	int bottomPacman = y1 + h1;
+
+
+
+	int leftCherry = x2;
+	int topCherry = y2;
+	int rightCherry = x2 + w2;
+	int bottomCherry = y2 + h2;
+
+
+	if (bottomPacman < topCherry)
+	{
+		return false;
+	}
+	if (topPacman > bottomCherry)
+	{
+		return false;
+	}
+	if (rightPacman < leftCherry)
+	{
+		return false;
+	}
+	if (leftPacman > rightCherry)
+	{
+		return false;
+	}
+
+	return true;
+}
 
 bool Pacman::CollisionSunCheck(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2)
 {
@@ -1153,11 +1200,11 @@ void Pacman::CheckTileCollision(int elapsedTime)
 	int rightSun = _sun[0]->_sunPosition->X + _sun[0]->_sunRect->Width;
 	int bottomSun = _sun[0]->_sunPosition->Y + _sun[0]->_sunRect->Height;
 
-	////Cherry Collision
-	//int leftCherry = _cherry[0]->_cherry_position->X;
-	//int topCherry = _cherry[0]->_cherry_position->Y;
-	//int rightCherry = _cherry[0]->_cherry_position->X + _cherry[0]->_cherryRect->Width;
-	//int bottomCherry = _cherry[0]->_cherry_position->Y + _cherry[0]->_cherryRect->Height;
+	//Cherry Collision
+	int leftCherry = _cherry[0]->_cherry_position->X;
+	int topCherry = _cherry[0]->_cherry_position->Y;
+	int rightCherry = _cherry[0]->_cherry_position->X + _cherry[0]->_cherryRect->Width;
+	int bottomCherry = _cherry[0]->_cherry_position->Y + _cherry[0]->_cherryRect->Height;
 
 
 
@@ -1238,32 +1285,33 @@ void Pacman::CheckTileCollision(int elapsedTime)
 				}
 			}
 		}
-		//for (int j = 0; j < CHERRYCOUNT; j++)
-		//{
-		//	if (topCherry <= tile_bottom && bottomCherry >= tile_top && leftCherry <= tile_right && rightCherry >= tile_left)
-		//	{
-		//		if (i == 0) //Top
-		//		{
-		//			_cherry[j]->_cherry_position->Y = _tiles[0]._tilesPosition->Y + _tiles[0]._tilesRect->Height;
-		//			cout << " wall collision" << endl;
-		//		}
-		//		if (i == 1) //Bottom
-		//		{
-		//			_cherry[j]->_cherry_position->Y = _tiles[1]._tilesPosition->Y - _cherry[j]->_cherryRect->Height;
-		//			cout << " wall collision" << endl;
-		//		}
-		//		if (i == 2) //left
-		//		{
-		//			_cherry[j]->_cherry_position->X = _tiles[2]._tilesPosition->X + _tiles[2]._tilesRect->Width;
-		//			cout << " wall collision" << endl;
-		//		}
-		//		if (i == 3) //Right
-		//		{
-		//			_cherry[j]->_cherry_position->X = _tiles[3]._tilesPosition->X - _cherry[j]->_cherryRect->Width;
-		//			cout << " wall collision" << endl;
-		//		}
-		//	}
-		//}
+		for (int j = 0; j < CHERRYCOUNT; j++)
+		{
+			if (topCherry <= tile_bottom && bottomCherry >= tile_top && leftCherry <= tile_right && rightCherry >= tile_left)
+			{
+				if (i == 0) //Top
+				{
+					_cherry[j]->_cherry_position->Y = _tiles[0]._tilesPosition->Y + _tiles[0]._tilesRect->Height;
+					cout << " wall collision" << endl;
+				}
+				if (i == 1) //Bottom
+				{
+					_cherry[j]->_cherry_position->Y = _tiles[1]._tilesPosition->Y - _cherry[j]->_cherryRect->Height;
+					cout << " wall collision" << endl;
+
+				}
+				if (i == 2) //left
+				{
+					_cherry[j]->_cherry_position->X = _tiles[2]._tilesPosition->X + _tiles[2]._tilesRect->Width;
+					cout << " wall collision" << endl;
+				}
+				if (i == 3) //Right
+				{
+					_cherry[j]->_cherry_position->X = _tiles[3]._tilesPosition->X - _cherry[j]->_cherryRect->Width;
+					cout << " wall collision" << endl;
+				}
+			}
+		}
 
 
 		//Ghost 2
